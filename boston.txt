@@ -1,0 +1,51 @@
+import numpy as np
+import pandas as pd 
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, LeakyReLU, Dropout
+#load the dataset
+data = pd.read_csv("Boston_Housing.csv")
+data.head()
+#preprocess the data
+X = data.drop(columns=['LSTAT'])
+y = data['LSTAT']
+data = data.drop(columns=['Unnamed: 14'])
+#remove rows NaN values
+data = data.dropna()
+#preprocess data again
+X = data.drop(columns=['MEDV'])#features
+y = data['MEDV']#target
+#preprocess data again
+X = data.drop(columns=['MEDV'])#features
+y = data['MEDV']#target
+#split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+#standardize the features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+#build the model
+model = Sequential([
+    Dense(128, activation=LeakyReLU(alpha=0.1), input_shape=(X_train_scaled.shape[1],)),
+    Dropout(0.2),
+    Dense(64, activation=LeakyReLU(alpha=0.1)),
+    Dropout(0.2),
+    Dense(32, activation=LeakyReLU(alpha=0.1)),
+    Dropout(0,2),
+    Dense(1)
+])
+#adjusted training parameters
+optimizer = Adam(learning_rate=0.0001)
+model.compile(optimizer=optimizer, loss='mean_squared_error')
+model.fit(X_train_scaled, y_train, epochs=200, batch_size=32, validation_split=0.2)
+#evaluate the model
+test_loss = model.evaluate(X_test_scaled, y_test)
+print('Test Loss:', test_loss)
+#make prediction
+prediction = model.predict(X_test_scaled)
+#print some predictions and actual values
+print('Some predictions and Actual values:')
+for i in range(5):
+    print('Predicted Price:', prediction[i][0], 'Actual Price:', y_test.iloc[i])
